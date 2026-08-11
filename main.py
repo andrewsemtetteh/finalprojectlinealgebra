@@ -151,12 +151,18 @@ def createPlaneVisual(planeA, planeB):
 
     fig.update_layout(
         template="plotly_dark",
-        title="3D Plane Intersection Visualization",
-        scene=dict(
-            xaxis_title="X Axis",
-            yaxis_title="Y Axis",
-            zaxis_title="Z Axis"
+        title=dict(
+            text="3D Plane Intersection Visualization",
+            x=0.5,
+            xanchor="center",
         ),
-        margin=dict(l=0, r=0, b=0, t=40)
+        height=750,
+        scene=dict(
+            xaxis_title="x₁",
+            yaxis_title="x₂",
+            zaxis_title="x₃",
+            aspectmode="cube",
+        ),
+        margin=dict(l=0, r=0, b=0, t=60)
     )
     return fig, analysis
