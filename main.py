@@ -1,5 +1,24 @@
 import numpy as np
 
+def format_number(value):
+    # show integers without a trailing decimal point
+    rounded = round(float(value), 4)
+    if abs(rounded - round(rounded)) < 1e-9:
+        return str(int(round(rounded)))
+    text = f"{rounded:.4f}".rstrip("0").rstrip(".")
+    return text
+
+
+def format_matrix(matrix):
+    # pretty-print a matrix without unnecessary decimals
+    rounded = np.round(np.asarray(matrix, dtype=float), 4)
+    rows = []
+    for row in rounded:
+        values = "  ".join(f"{format_number(val):>8}" for val in row)
+        rows.append(f"[ {values} ]")
+    return "\n".join(rows)
+
+
 def rref(matrix):
     # computes the reduced row echelon form of a matrix
     rref_matrix = matrix.astype(float)
@@ -27,7 +46,7 @@ def rref(matrix):
                 term = f" - {var}"
             else:
                 sign = " + " if val > 0 else " - "
-                mag = f"{abs(val):.0f}" if abs(val) == int(abs(val)) else f"{abs(val):.4f}"
+                mag = format_number(abs(val))
                 term = f"{sign}{mag}{var}"
             terms.append(term)
 
@@ -42,11 +61,11 @@ def rref(matrix):
                 eq_str = "-" + eq_str[2:]
 
         rhs_val = rref_matrix[r, cols-1]
-        rhs_str = f"{rhs_val:.0f}" if rhs_val == int(rhs_val) else f"{rhs_val:.4f}"
+        rhs_str = format_number(rhs_val)
         equations_str_parts.append(f"{eq_str} = {rhs_str}")
 
     initial_equations_display = "\n".join(equations_str_parts)
-    steps = [f"The linear equations are:\n{initial_equations_display}\n\nCurrent Augmented Matrix:\n" + str(np.round(rref_matrix, 4))]
+    steps = [f"The linear equations are:\n{initial_equations_display}\n\nCurrent Augmented Matrix:\n" + format_matrix(rref_matrix)]
 
     for r in range(rows):
         if pivot >= cols:
@@ -67,14 +86,14 @@ def rref(matrix):
         rref_matrix[[i, r]] = rref_matrix[[r, i]]
         pivot_val = rref_matrix[r, pivot]
         rref_matrix[r] = rref_matrix[r] / pivot_val
-        steps.append(f"Normalize pivot at row {r+1}:\n" + str(np.round(rref_matrix, 4)))
+        steps.append(f"Normalize pivot at row {r+1}:\n" + format_matrix(rref_matrix))
 
         for i in range(rows):
             if i != r:
                 factor = rref_matrix[i, pivot]
                 subscripted_col_idx = str(pivot + 1).translate(SUB_DIGITS)
                 rref_matrix[i] = rref_matrix[i] - factor * rref_matrix[r]
-                steps.append(f"Eliminate x{subscripted_col_idx} in row {i+1}:\n" + str(np.round(rref_matrix, 4)))
+                steps.append(f"Eliminate x{subscripted_col_idx} in row {i+1}:\n" + format_matrix(rref_matrix))
         pivot += 1
 
     for contradiction_row in range(rows):
@@ -113,8 +132,8 @@ def createPlaneVisual(planeA, planeB):
     analysis = analyzePlaneIntersection(planeA, planeB)
 
     fig = go.Figure()
-    x = np.linspace(-10, 10, 20)
-    y = np.linspace(-10, 10, 20)
+    x = np.linspace(-12, 12, 40)
+    y = np.linspace(-12, 12, 40)
     X, Y = np.meshgrid(x, y)
 
     def get_z(p, X_grid, Y_grid):
@@ -125,15 +144,31 @@ def createPlaneVisual(planeA, planeB):
         return np.zeros_like(X_grid)
 
     # plotting plane a
-    fig.add_trace(go.Surface(x=X, y=Y, z=get_z(planeA, X, Y), name="Plane A", colorscale='Blues', showscale=False, opacity=0.7))
+    fig.add_trace(go.Surface(
+        x=X, y=Y, z=get_z(planeA, X, Y),
+        name="Plane A",
+        colorscale='Blues',
+        showscale=False,
+        showlegend=True,
+        opacity=0.65,
+        hovertemplate="Plane A<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
+    ))
 
     # plotting plane b
-    fig.add_trace(go.Surface(x=X, y=Y, z=get_z(planeB, X, Y), name="Plane B", colorscale='Reds', showscale=False, opacity=0.7))
+    fig.add_trace(go.Surface(
+        x=X, y=Y, z=get_z(planeB, X, Y),
+        name="Plane B",
+        colorscale='Reds',
+        showscale=False,
+        showlegend=True,
+        opacity=0.65,
+        hovertemplate="Plane B<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
+    ))
 
     if analysis['case'] == "line":
         # finding a point on the line using rref
         rref = analysis['rrefMatrix']
-        t = np.linspace(-15, 15, 100)
+        t = np.linspace(-15, 15, 200)
         v = analysis['directionVector']
 
         # finding a particular solution p0
@@ -147,7 +182,23 @@ def createPlaneVisual(planeA, planeB):
         line_y = p0[1] + t * v[1]
         line_z = p0[2] + t * v[2]
 
-        fig.add_trace(go.Scatter3d(x=line_x, y=line_y, z=line_z, mode='lines', line=dict(color='yellow', width=8), name="Intersection Line"))
+        fig.add_trace(go.Scatter3d(
+            x=line_x, y=line_y, z=line_z,
+            mode='lines',
+            line=dict(color='yellow', width=10),
+            name="Intersection Line",
+            hovertemplate="Intersection<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
+        ))
+
+    axis_style = dict(
+        showbackground=True,
+        backgroundcolor="rgba(20, 24, 36, 0.85)",
+        gridcolor="rgba(180, 180, 180, 0.35)",
+        zerolinecolor="rgba(255, 255, 255, 0.55)",
+        showspikes=True,
+        spikesides=False,
+        spikethickness=2,
+    )
 
     fig.update_layout(
         template="plotly_dark",
@@ -155,14 +206,29 @@ def createPlaneVisual(planeA, planeB):
             text="3D Plane Intersection Visualization",
             x=0.5,
             xanchor="center",
+            font=dict(size=28),
         ),
-        height=750,
+        height=920,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=14),
+        ),
         scene=dict(
-            xaxis_title="x₁",
-            yaxis_title="x₂",
-            zaxis_title="x₃",
+            xaxis=dict(title="x₁", range=[-12, 12], **axis_style),
+            yaxis=dict(title="x₂", range=[-12, 12], **axis_style),
+            zaxis=dict(title="x₃", range=[-12, 12], **axis_style),
             aspectmode="cube",
+            dragmode="orbit",
+            camera=dict(
+                eye=dict(x=1.6, y=1.6, z=1.15),
+                center=dict(x=0, y=0, z=0),
+            ),
         ),
-        margin=dict(l=0, r=0, b=0, t=60)
+        margin=dict(l=10, r=10, b=10, t=90),
+        uirevision="plane-intersection",
     )
     return fig, analysis

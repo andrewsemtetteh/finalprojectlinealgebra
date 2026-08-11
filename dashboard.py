@@ -108,4 +108,13 @@ with st.expander("Show step-by-step RREF calculation", expanded=True):
         st.divider()
 
 fig, _ = createPlaneVisual(plane_a, plane_b)
-st.plotly_chart(fig, use_container_width=True)
+st.caption("Drag to rotate · Scroll to zoom · Right-click drag to pan · Double-click to reset view")
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+    config={
+        "scrollZoom": True,
+        "displaylogo": False,
+        "modeBarButtonsToAdd": ["resetCameraDefault3d", "resetCameraLastSave3d"],
+    },
+)
