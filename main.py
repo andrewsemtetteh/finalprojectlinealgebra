@@ -1,6 +1,7 @@
 import numpy as np
+import plotly.graph_objects as go
 
-def format_number(value):
+def formatNumber(value):
     # show integers without a trailing decimal point
     rounded = round(float(value), 4)
     if abs(rounded - round(rounded)) < 1e-9:
@@ -9,12 +10,12 @@ def format_number(value):
     return text
 
 
-def format_matrix(matrix):
+def formatMatrix(matrix):
     # pretty-print a matrix without unnecessary decimals
     rounded = np.round(np.asarray(matrix, dtype=float), 4)
     rows = []
     for row in rounded:
-        values = "  ".join(f"{format_number(val):>8}" for val in row)
+        values = "  ".join(f"{formatNumber(val):>8}" for val in row)
         rows.append(f"[ {values} ]")
     return "\n".join(rows)
 
@@ -46,7 +47,7 @@ def rref(matrix):
                 term = f" - {var}"
             else:
                 sign = " + " if val > 0 else " - "
-                mag = format_number(abs(val))
+                mag = formatNumber(abs(val))
                 term = f"{sign}{mag}{var}"
             terms.append(term)
 
@@ -61,11 +62,11 @@ def rref(matrix):
                 eq_str = "-" + eq_str[2:]
 
         rhs_val = rref_matrix[r, cols-1]
-        rhs_str = format_number(rhs_val)
+        rhs_str = formatNumber(rhs_val)
         equations_str_parts.append(f"{eq_str} = {rhs_str}")
 
     initial_equations_display = "\n".join(equations_str_parts)
-    steps = [f"The linear equations are:\n{initial_equations_display}\n\nCurrent Augmented Matrix:\n" + format_matrix(rref_matrix)]
+    steps = [f"The linear equations are:\n{initial_equations_display}\n\nCurrent Augmented Matrix:\n" + formatMatrix(rref_matrix)]
 
     for r in range(rows):
         if pivot >= cols:
@@ -86,14 +87,14 @@ def rref(matrix):
         rref_matrix[[i, r]] = rref_matrix[[r, i]]
         pivot_val = rref_matrix[r, pivot]
         rref_matrix[r] = rref_matrix[r] / pivot_val
-        steps.append(f"Normalize pivot at row {r+1}:\n" + format_matrix(rref_matrix))
+        steps.append(f"Normalize pivot at row {r+1}:\n" + formatMatrix(rref_matrix))
 
         for i in range(rows):
             if i != r:
                 factor = rref_matrix[i, pivot]
                 subscripted_col_idx = str(pivot + 1).translate(SUB_DIGITS)
                 rref_matrix[i] = rref_matrix[i] - factor * rref_matrix[r]
-                steps.append(f"Eliminate x{subscripted_col_idx} in row {i+1}:\n" + format_matrix(rref_matrix))
+                steps.append(f"Eliminate x{subscripted_col_idx} in row {i+1}:\n" + formatMatrix(rref_matrix))
         pivot += 1
 
     for contradiction_row in range(rows):
@@ -125,18 +126,15 @@ def analyzePlaneIntersection(planeA, planeB):
         result["explanation"] = "The equations represent the same plane. Every point on one plane is on the other."
     return result
 
-import plotly.graph_objects as go
-import numpy as np
-
 def createPlaneVisual(planeA, planeB):
     analysis = analyzePlaneIntersection(planeA, planeB)
 
     fig = go.Figure()
-    x = np.linspace(-12, 12, 40)
-    y = np.linspace(-12, 12, 40)
+    x = np.linspace(-6, 6, 20)
+    y = np.linspace(-6, 6, 20)
     X, Y = np.meshgrid(x, y)
 
-    def get_z(p, X_grid, Y_grid):
+    def getZ(p, X_grid, Y_grid):
         # calculate z coordinates based on plane parameters
         a, b, c, d = p
         if c != 0:
@@ -145,37 +143,33 @@ def createPlaneVisual(planeA, planeB):
 
     # plotting plane a
     fig.add_trace(go.Surface(
-        x=X, y=Y, z=get_z(planeA, X, Y),
+        x=X, y=Y, z=getZ(planeA, X, Y),
         name="Plane A",
         colorscale='Blues',
         showscale=False,
-        showlegend=True,
-        opacity=0.65,
-        hovertemplate="Plane A<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
+        opacity=0.7,
     ))
 
     # plotting plane b
     fig.add_trace(go.Surface(
-        x=X, y=Y, z=get_z(planeB, X, Y),
+        x=X, y=Y, z=getZ(planeB, X, Y),
         name="Plane B",
         colorscale='Reds',
         showscale=False,
-        showlegend=True,
-        opacity=0.65,
-        hovertemplate="Plane B<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
+        opacity=0.7,
     ))
 
     if analysis['case'] == "line":
         # finding a point on the line using rref
-        rref = analysis['rrefMatrix']
-        t = np.linspace(-15, 15, 200)
+        rrefMatrix = analysis['rrefMatrix']
+        t = np.linspace(-10, 10, 100)
         v = analysis['directionVector']
 
         # finding a particular solution p0
         p0 = np.zeros(3)
-        if rref[0, 0] == 1 and rref[1, 1] == 1:
-             p0[0] = rref[0, 3]
-             p0[1] = rref[1, 3]
+        if rrefMatrix[0, 0] == 1 and rrefMatrix[1, 1] == 1:
+             p0[0] = rrefMatrix[0, 3]
+             p0[1] = rrefMatrix[1, 3]
              p0[2] = 0
 
         line_x = p0[0] + t * v[0]
@@ -185,20 +179,9 @@ def createPlaneVisual(planeA, planeB):
         fig.add_trace(go.Scatter3d(
             x=line_x, y=line_y, z=line_z,
             mode='lines',
-            line=dict(color='yellow', width=10),
+            line=dict(color='yellow', width=8),
             name="Intersection Line",
-            hovertemplate="Intersection<br>x₁=%{x:.2f}<br>x₂=%{y:.2f}<br>x₃=%{z:.2f}<extra></extra>",
         ))
-
-    axis_style = dict(
-        showbackground=True,
-        backgroundcolor="rgba(20, 24, 36, 0.85)",
-        gridcolor="rgba(180, 180, 180, 0.35)",
-        zerolinecolor="rgba(255, 255, 255, 0.55)",
-        showspikes=True,
-        spikesides=False,
-        spikethickness=2,
-    )
 
     fig.update_layout(
         template="plotly_dark",
@@ -209,22 +192,14 @@ def createPlaneVisual(planeA, planeB):
             font=dict(size=28),
         ),
         height=920,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5,
-            font=dict(size=14),
-        ),
         scene=dict(
-            xaxis=dict(title="x₁", range=[-12, 12], **axis_style),
-            yaxis=dict(title="x₂", range=[-12, 12], **axis_style),
-            zaxis=dict(title="x₃", range=[-12, 12], **axis_style),
+            xaxis_title="x₁",
+            yaxis_title="x₂",
+            zaxis_title="x₃",
             aspectmode="cube",
             dragmode="orbit",
             camera=dict(
-                eye=dict(x=1.6, y=1.6, z=1.15),
+                eye=dict(x=1.55, y=1.55, z=1.1),
                 center=dict(x=0, y=0, z=0),
             ),
         ),

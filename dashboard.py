@@ -43,7 +43,7 @@ st.markdown(
 )
 
 
-def latex_plane(a, b, c, d):
+def latexPlane(a, b, c, d):
     """Build a LaTeX plane equation in the form ax₁ + bx₂ + cx₃ = d."""
     parts = []
     for coef, var in ((a, "x_1"), (b, "x_2"), (c, "x_3")):
@@ -85,14 +85,14 @@ if any(value is None for value in inputs):
     )
     st.stop()
 
-plane_a = [a1, b1, c1, d1]
-plane_b = [a2, b2, c2, d2]
+planeA = [a1, b1, c1, d1]
+planeB = [a2, b2, c2, d2]
 
 st.markdown("### Plane Equations")
-st.latex(latex_plane(a1, b1, c1, d1))
-st.latex(latex_plane(a2, b2, c2, d2))
+st.latex(latexPlane(a1, b1, c1, d1))
+st.latex(latexPlane(a2, b2, c2, d2))
 
-analysis = analyzePlaneIntersection(plane_a, plane_b)
+analysis = analyzePlaneIntersection(planeA, planeB)
 
 st.markdown("### Result")
 if analysis["case"] == "line":
@@ -107,7 +107,7 @@ with st.expander("Show step-by-step RREF calculation", expanded=True):
         st.text(step)
         st.divider()
 
-fig, _ = createPlaneVisual(plane_a, plane_b)
+fig, _ = createPlaneVisual(planeA, planeB)
 st.caption("Drag to rotate · Scroll to zoom · Right-click drag to pan · Double-click to reset view")
 st.plotly_chart(
     fig,
